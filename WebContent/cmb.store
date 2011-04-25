@@ -1,0 +1,445 @@
+package com.bigjava.dpi.gui;
+import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.sql.DataSource;
+import com.bigjava.jsf.AjaxEvent;
+import com.bigjava.jsf.CheckBox;
+import com.bigjava.jsf.ComboBoxStatic;
+import com.bigjava.jsf.Component;
+import com.bigjava.jsf.DataEventListener;
+import com.bigjava.jsf.FormPanel;
+import com.bigjava.jsf.FormPanelEventListener;
+import com.bigjava.jsf.FormPanelResult;
+import com.bigjava.jsf.GridPanel;
+import com.bigjava.jsf.JSFunction;
+import com.bigjava.jsf.JSObject;
+import com.bigjava.jsf.ObjectPool;
+import com.bigjava.jsf.Panel;
+import com.bigjava.jsf.Persentile;
+
+/**
+ * Untuk menentukan data yang akan dikirim
+ * @author jonan 12 january 2011
+ *
+ */
+public class MoretoReportingDataCenter extends FormPanel implements FormPanelEventListener {
+
+	RequestPool pnlRequestPool;//menampung sticky
+	Persentile persentil; //tambahan fungsi persentil
+	MainScreen scrMain;
+//	String sql="";
+	MoretoAllDevicesEast pnlMoretoAllDevicesEast=null;
+	String idDev="";
+	String ipSrc="";
+	CheckBox cboxGraph = new CheckBox(pool);
+	CheckBox cboxTraffic = new CheckBox(pool);
+	CheckBox cboxLive = new CheckBox(pool);
+	CheckBox cboxDns = new CheckBox(pool);
+	CheckBox cboxHttp = new CheckBox(pool);
+	CheckBox cboxFlash = new CheckBox(pool);
+	CheckBox cboxP2p = new CheckBox(pool);
+	CheckBox cboxSetTime = new CheckBox(pool);
+	CheckBox cboxExcWeek = new CheckBox(pool);
+	ComboBoxStatic txtBoxFHour = new ComboBoxStatic(pool);
+	ComboBoxStatic txtBoxFMinute = new ComboBoxStatic(pool);
+	ComboBoxStatic txtBoxTHour = new ComboBoxStatic(pool);
+	ComboBoxStatic txtBoxTMinute = new ComboBoxStatic(pool);
+	int vGraph=0;
+	int vTraffic=0;
+	int vLive=0;
+	int vDns=0;
+	int vHttp=0;
+	int vFlash=0;
+	int vP2p=0;
+	int vFilter1=0;
+	int vFilter2=0;
+	String vFhour="";
+	String vFminute="";
+	String vThour="";
+	String vTminute="";
+	
+	public MoretoReportingDataCenter(ObjectPool pool, RequestPool pnlStiki, MainScreen screen, AjaxEvent jxe) {
+		super(pool);
+		pnlRequestPool = pnlStiki;
+		scrMain = screen;
+		
+		setAttribute("bodyStyle", "padding: 5px;background:#dfe8f6;");
+		setBorder(false);
+		
+		Panel pnlWrap = new Panel(pool);
+		pnlWrap.setAttribute("autoScroll",true);
+		pnlWrap.setHeight(400);
+		pnlWrap.setAttribute("bodyStyle", "padding: 5px;background:#dfe8f6;");
+		
+		//Panel sticky
+		Panel panelatas = new Panel(pool);
+		panelatas.setAttribute("bodyStyle", "background:#dfe8f6;");
+		panelatas.setAttribute("html", stickyhtml());
+		panelatas.setBorder(false);
+		pnlWrap.setArrayAttribute("items", panelatas);
+		//Pilihan checkbox		
+		cboxGraph.setAttribute("name", "cboxGraph");
+		cboxGraph.setAttribute("fieldLabel", "Graph");
+		pnlWrap.setArrayAttribute("items", cboxGraph);		
+		cboxTraffic.setAttribute("name", "cboxTraffic");
+		cboxTraffic.setAttribute("fieldLabel", "Traffic");		
+		pnlWrap.setArrayAttribute("items", cboxTraffic);	
+		cboxLive.setAttribute("name", "cboxLive");
+		cboxLive.setAttribute("fieldLabel", "Live Session");			
+		pnlWrap.setArrayAttribute("items", cboxLive);		
+		cboxDns.setAttribute("name", "cboxDns");
+		cboxDns.setAttribute("fieldLabel", "DNS");			
+		pnlWrap.setArrayAttribute("items", cboxDns);		
+		cboxHttp.setAttribute("name", "cboxHttp");
+		cboxHttp.setAttribute("fieldLabel", "HTTP");			
+		pnlWrap.setArrayAttribute("items", cboxHttp);		
+		cboxFlash.setAttribute("name", "cboxFlash");
+		cboxFlash.setAttribute("fieldLabel", "Flash/Video");		
+		pnlWrap.setArrayAttribute("items", cboxFlash);		
+		cboxP2p.setAttribute("name", "cboxP2p");
+		cboxP2p.setAttribute("fieldLabel", "P2P/File Sharing");	
+		pnlWrap.setArrayAttribute("items", cboxP2p);
+		//Filter
+		Panel titleFilter = new Panel(pool);
+		titleFilter.setAttribute("bodyStyle", "background:#dfe8f6 none no-repeat;");
+		titleFilter.setAttribute("html", "<br><h3>Filter</h3>");
+		titleFilter.setBorder(false);
+		pnlWrap.setArrayAttribute("items", titleFilter);
+		//
+		cboxSetTime.setAttribute("name", "cboxSetTime");
+		Panel pnlCboxSetTime = new Panel(pool);
+		pnlCboxSetTime.setAttribute("bodyStyle", "background:#dfe8f6 none no-repeat;");
+		pnlCboxSetTime.setArrayAttribute("items",cboxSetTime);
+		pnlCboxSetTime.setAttribute("width", 40);
+		pnlCboxSetTime.setBorder(false);
+		Panel labelCboxSetTime = new Panel(pool);
+		labelCboxSetTime.setAttribute("bodyStyle", "background:#dfe8f6 none no-repeat;");
+		labelCboxSetTime.setAttribute("html", "Set Time");
+		labelCboxSetTime.setAttribute("width", 100);
+		labelCboxSetTime.setBorder(false);
+		//Input time from
+		
+		for(int i=0;i<=9;i++)
+		{
+			txtBoxFHour.setData("0"+i);
+		}
+		for(int i=10;i<24;i++)
+		{
+			txtBoxFHour.setData(""+i);
+		}
+		txtBoxFHour.setAttribute("name", "txt_fhour");
+		txtBoxFHour.setAttribute("emptyText", "");
+		txtBoxFHour.setAttribute("width",40);
+		txtBoxFHour.setAttribute("value", vFhour);
+		for(int i=0;i<=9;i++)
+		{
+			txtBoxFMinute.setData("0"+i);
+		}
+		for(int i=10;i<60;i++)
+		{
+			txtBoxFMinute.setData(""+i);
+		}
+		txtBoxFMinute.setAttribute("name", "txt_fminute");
+		txtBoxFMinute.setAttribute("emptyText", "");
+		txtBoxFMinute.setAttribute("width",40);
+		txtBoxFMinute.setAttribute("value", vFminute);
+		//
+		Panel pnlTxtBoxFHour = new Panel(pool);
+		pnlTxtBoxFHour.setAttribute("bodyStyle", "background:#dfe8f6 none no-repeat;");
+		pnlTxtBoxFHour.setArrayAttribute("items",txtBoxFHour);
+		pnlTxtBoxFHour.setAttribute("width", 50);
+		pnlTxtBoxFHour.setBorder(false);
+		Panel pnlTxtBoxFMinute = new Panel(pool);
+		pnlTxtBoxFMinute.setAttribute("bodyStyle", "background:#dfe8f6 none no-repeat;");
+		pnlTxtBoxFMinute.setArrayAttribute("items",txtBoxFMinute);
+		pnlTxtBoxFMinute.setAttribute("width", 50);
+		pnlTxtBoxFMinute.setBorder(false);
+		//
+		Panel labelTo = new Panel(pool);
+		labelTo.setAttribute("bodyStyle", "background:#dfe8f6 none no-repeat;");
+		labelTo.setAttribute("html", "<div align=\"center\">to</div>");
+		labelTo.setAttribute("width", 50);
+		labelTo.setBorder(false);
+		//Input time to
+		
+		for(int i=0;i<=9;i++)
+		{
+			txtBoxTHour.setData("0"+i);
+		}
+		for(int i=10;i<24;i++)
+		{
+			txtBoxTHour.setData(""+i);
+		}
+		txtBoxTHour.setAttribute("name", "txt_thour");
+		txtBoxTHour.setAttribute("emptyText", "");
+		txtBoxTHour.setAttribute("width",40);
+		txtBoxTHour.setAttribute("value", vThour);
+		for(int i=0;i<=9;i++)
+		{
+			txtBoxTMinute.setData("0"+i);
+		}
+		for(int i=10;i<60;i++)
+		{
+			txtBoxTMinute.setData(""+i);
+		}
+		txtBoxTMinute.setAttribute("name", "txt_tminute");
+		txtBoxTMinute.setAttribute("emptyText", "");
+		txtBoxTMinute.setAttribute("width",40);
+		txtBoxTMinute.setAttribute("value", vTminute);
+		//
+		Panel pnlTxtBoxTHour = new Panel(pool);
+		pnlTxtBoxTHour.setAttribute("bodyStyle", "background:#dfe8f6 none no-repeat;");
+		pnlTxtBoxTHour.setArrayAttribute("items",txtBoxTHour);
+		pnlTxtBoxTHour.setAttribute("width", 50);
+		pnlTxtBoxTHour.setBorder(false);
+		Panel pnlTxtBoxTMinute = new Panel(pool);
+		pnlTxtBoxTMinute.setAttribute("bodyStyle", "background:#dfe8f6 none no-repeat;");
+		pnlTxtBoxTMinute.setArrayAttribute("items",txtBoxTMinute);
+		pnlTxtBoxTMinute.setAttribute("width", 50);
+		pnlTxtBoxTMinute.setBorder(false);
+		//Combine
+		Panel pnlMenuSetTime = new Panel(pool);
+		pnlMenuSetTime.setAttribute("bodyStyle", "background:#dfe8f6 none no-repeat;");
+		pnlMenuSetTime.setAttribute("height", 40);
+		pnlMenuSetTime.setLayout("column");
+		pnlMenuSetTime.setBorder(false);
+		pnlMenuSetTime.setArrayAttribute("items",labelCboxSetTime);
+		pnlMenuSetTime.setArrayAttribute("items",pnlCboxSetTime); 
+		pnlMenuSetTime.setArrayAttribute("items",pnlTxtBoxFHour);
+		pnlMenuSetTime.setArrayAttribute("items",pnlTxtBoxFMinute);
+		pnlMenuSetTime.setArrayAttribute("items",labelTo);
+		pnlMenuSetTime.setArrayAttribute("items",pnlTxtBoxTHour);
+		pnlMenuSetTime.setArrayAttribute("items",pnlTxtBoxTMinute);
+		pnlWrap.setArrayAttribute("items",pnlMenuSetTime);
+		
+		//Exclude Weekend
+		cboxExcWeek.setAttribute("name", "cboxExcWeek");
+		Panel pnlCboxExcWeek = new Panel(pool);
+		pnlCboxExcWeek.setAttribute("bodyStyle", "background:#dfe8f6 none no-repeat;");
+		pnlCboxExcWeek.setArrayAttribute("items",cboxExcWeek);
+		pnlCboxExcWeek.setAttribute("width", 50);
+		pnlCboxExcWeek.setBorder(false);
+		Panel labelCboxExcWeek = new Panel(pool);
+		labelCboxExcWeek.setAttribute("bodyStyle", "background:#dfe8f6 none no-repeat;");
+		labelCboxExcWeek.setAttribute("html", "Exclude Weekend");
+		labelCboxExcWeek.setAttribute("width", 100);
+		labelCboxExcWeek.setBorder(false);
+		//Combine
+		Panel pnlMenuExcWeek = new Panel(pool);
+		pnlMenuExcWeek.setAttribute("bodyStyle", "background:#dfe8f6 none no-repeat;");
+		pnlMenuExcWeek.setAttribute("height", 40);
+		pnlMenuExcWeek.setLayout("column");
+		pnlMenuExcWeek.setBorder(false);
+		pnlMenuExcWeek.setArrayAttribute("items",labelCboxExcWeek);
+		pnlMenuExcWeek.setArrayAttribute("items",pnlCboxExcWeek); 
+		pnlWrap.setArrayAttribute("items",pnlMenuExcWeek);
+		
+		addSubmitButton("Apply", "Loading...");
+		addExportButton(jxe,"","");
+		setEventListener(this);
+		setAttribute("items",pnlWrap);
+		
+		//load form data
+		loadForm();
+		cboxGraph.setAttribute("checked", vGraph);
+		cboxTraffic.setAttribute("checked", vTraffic);
+		cboxLive.setAttribute("checked", vLive);
+		cboxDns.setAttribute("checked", vDns);
+		cboxHttp.setAttribute("checked", vHttp);
+		cboxFlash.setAttribute("checked", vFlash);
+		cboxP2p.setAttribute("checked", vP2p);
+		cboxSetTime.setAttribute("checked", vFilter1);
+		cboxExcWeek.setAttribute("checked", vFilter2);
+		txtBoxFHour.setAttribute("value", vFhour);
+		txtBoxFMinute.setAttribute("value", vFminute);
+		txtBoxTHour.setAttribute("value", vThour);
+		txtBoxTMinute.setAttribute("value", vTminute);
+	}
+	
+	/**
+	 * Menampilkan menu sticky
+	 * @author Jonan
+	 * @return Nilai html
+	 */
+	public String stickyhtml()
+	{	
+		String htmlku = "<p align=\"right\"><a href=\"#\" onclick=\"jfm_request(\\'reqStatusSticky\\',\\'"+pnlRequestPool.getId()+"\\',\\'&pageid=reportingdata\\')\"><img src=\"res/sticky.png\" /></a></p>";
+		return htmlku;
+	}
+	
+	/**
+	 * Load isi form
+	 * @author Jonan
+	 */
+	public void loadForm() {
+		
+		ResultSet rs=null;
+		
+		InitialContext initContext;
+		Context envContext;
+		try {
+			initContext = new InitialContext();
+			envContext = (Context)initContext.lookup("java:/comp/env");
+			
+			DataSource ds = (DataSource)(envContext).lookup("jdbc/DpiDB");
+			Connection conn = ds.getConnection();
+			Statement st = conn.createStatement();
+			
+			String sql = String.format("select graph,traffic,live_session,dns,http,flash,p2p,filter1,filter2,start_hour,end_hour from report_schedule;");
+//			System.out.println("MoretoReportingDataCenter - sql : "+sql);
+			rs = st.executeQuery(sql);
+			while(rs.next()) {
+				vGraph = rs.getInt(1);
+				vTraffic = rs.getInt(2);
+				vLive = rs.getInt(3);
+				vDns = rs.getInt(4);
+				vHttp = rs.getInt(5);
+				vFlash = rs.getInt(6);
+				vP2p = rs.getInt(7);
+				vFilter1 = rs.getInt(8);
+				vFilter2 = rs.getInt(9);
+				splitHour(rs.getString(10),rs.getString(11));
+			}
+			rs.close();
+			st.close();
+			conn.close();
+		} catch (NamingException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Split hour
+	 * @author randikajonan
+	 * 21jan2011
+	 */
+	public void splitHour(String fhour, String thour)
+	{
+		String []arrFhour;
+		String []arrThour;
+		
+		arrFhour=fhour.toString().split(":");
+		arrThour=thour.toString().split(":");
+		vFhour=arrFhour[0];
+		vFminute=arrFhour[1];
+		vThour=arrThour[0];
+		vTminute=arrThour[1];
+//		System.out.println("moretoreportingdatacenter - vFour : "+vFhour+" "+vFminute);
+	}
+	
+	/**
+	 * Method untuk submit form ketika tombol submit ditekan.
+	 * @author Jonan
+	 * @param form FormPanel yang digunakan.
+	 * @param result Nilai untuk hasil dari form.
+	 * @param jxe Wadah untuk menjalankan ajax.js
+	 */
+	public void onSubmitted(FormPanel form, FormPanelResult result,
+			AjaxEvent jxe) 
+	{	
+	
+		int i1;
+		Object tmp=jxe.getRequest().getParameter("cboxGraph");
+		if(tmp==null){i1=0;}else{i1=1;}
+		int i2;
+		tmp=jxe.getRequest().getParameter("cboxTraffic");
+		if(tmp==null){i2=0;}else{i2=1;}
+		int i3;
+		tmp=jxe.getRequest().getParameter("cboxLive");
+		if(tmp==null){i3=0;}else{i3=1;}
+		int i4;
+		tmp=jxe.getRequest().getParameter("cboxDns");
+		if(tmp==null){i4=0;}else{i4=1;}
+		int i5;
+		tmp=jxe.getRequest().getParameter("cboxHttp");
+		if(tmp==null){i5=0;}else{i5=1;}
+		int i6;
+		tmp=jxe.getRequest().getParameter("cboxFlash");
+		if(tmp==null){i6=0;}else{i6=1;}
+		int i7;
+		tmp=jxe.getRequest().getParameter("cboxP2p");
+		if(tmp==null){i7=0;}else{i7=1;}
+		int i8;
+		tmp=jxe.getRequest().getParameter("cboxSetTime");
+		if(tmp==null){i8=0;}else{i8=1;}
+		String i9=jxe.getRequest().getParameter("txt_fhour").toString();
+		String i10=jxe.getRequest().getParameter("txt_fminute").toString();
+		String ftime=i9+":"+i10;
+		String i11=jxe.getRequest().getParameter("txt_thour").toString();
+		String i12=jxe.getRequest().getParameter("txt_tminute").toString();
+		String etime=i11+":"+i12;
+		int i13;
+		tmp=jxe.getRequest().getParameter("cboxExcWeek");
+		if(tmp==null){i13=0;}else{i13=1;}
+		
+//		if(d2.length()>0 )//&& w2.length()>0 && w3.length()>0 && m2.length()>0
+//		{
+			String sql_up = String.format("UPDATE report_schedule SET graph='%d',traffic='%d',live_session='%d',dns='%d',http='%d',flash='%d',p2p='%d',filter1='%d',start_hour='%s',end_hour='%s',filter2='%d' WHERE id_schedule='1'"
+					,i1,i2,i3,i4,i5,i6,i7,i8,ftime,etime,i13);
+//			System.out.println("MoretoReportingDataCenter - sql : "+sql);
+			InitialContext initContext;
+			Context envContext;
+			try {
+				initContext = new InitialContext();
+				envContext = (Context)initContext.lookup("java:/comp/env");
+				DataSource ds = (DataSource)(envContext).lookup("jdbc/DpiDB");
+				Connection conn = ds.getConnection();
+				java.sql.PreparedStatement st = conn.prepareStatement(sql_up);
+				st.executeUpdate();
+				loadForm();
+			    } catch (Exception e) {
+			      e.printStackTrace();
+			    }
+//			System.out.println("Moretoreportingdatacenter - id : "+cboxGraph.getId().toString());
+			result.setSuccess(true);
+		    result.setSuccessAction(new JSFunction("form,action",
+		    		
+		    		"Ext.getCmp('"+cboxGraph.getId()+"').setValue("+vGraph+");" +
+		    		"Ext.getCmp('"+cboxTraffic.getId()+"').setValue("+vTraffic+");" +
+		    		"Ext.getCmp('"+cboxLive.getId()+"').setValue("+vLive+");" +
+		    		"Ext.getCmp('"+cboxDns.getId()+"').setValue("+vDns+");" +
+		    		"Ext.getCmp('"+cboxHttp.getId()+"').setValue("+vHttp+");" +
+		    		"Ext.getCmp('"+cboxFlash.getId()+"').setValue("+vFlash+");" +
+		    		"Ext.getCmp('"+cboxP2p.getId()+"').setValue("+vP2p+");" +
+		    		"Ext.getCmp('"+cboxSetTime.getId()+"').setValue("+vFilter1+");" +
+		    		"Ext.getCmp('"+cboxExcWeek.getId()+"').setValue("+vFilter2+");" +
+		    		
+		    		"Ext.getCmp('"+txtBoxFHour.getId()+"').setValue("+vFhour+");" +
+		    		"Ext.getCmp('"+txtBoxFMinute.getId()+"').setValue("+vFminute+");" +
+		    		"Ext.getCmp('"+txtBoxTHour.getId()+"').setValue("+vThour+");" +
+		    		"Ext.getCmp('"+txtBoxTMinute.getId()+"').setValue("+vTminute+");" +
+		    		
+		    		"Ext.getCmp('"+this.getId()+"').getEl().dom.reset(); " +
+		   
+		    				""));
+
+//		}
+//		else
+//		{
+//			result.setSuccess(true);
+//			result.setSuccessAction(new JSFunction("form,action",
+//					"Ext.Msg.alert('Fail', 'Saving failed!');")); 
+//		}
+		
+	}
+	
+	/**
+	 * Men-transfer parameter dan menjalankan method pada class lain
+	 * @author Jonan
+	 */
+	public void reqGridDetail(AjaxEvent jxe)
+	{
+		idDev=jxe.getRequest().getParameter("idDevice").toString();
+		ipSrc=jxe.getRequest().getParameter("ipSrc").toString();
+//		pnlMoretoAllDevicesEast.getIdAlarm(idDev,jxe,ipSrc,grid);
+		scrMain.getIdAlarm("x", "10");
+	}
+}

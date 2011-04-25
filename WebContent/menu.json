@@ -1,0 +1,28 @@
+[{
+	text: 'benni-jonan',
+	cls: 'Folder',
+	children: [{
+			text: 'DM1-yulius',
+			leaf: true
+		},{
+			text: 'DM2',
+			leaf: true
+		},{
+			text: 'Policies',
+			leaf:true
+		}]
+},{
+	text: 'PM2',
+	cls: 'Folder',
+	children: [{
+			text: 'DM1',
+			leaf: true
+		},{
+			text: 'DM2',
+			leaf: true
+		},{
+			text: 'Policies',
+			leaf: true
+		}]
+}]
+
